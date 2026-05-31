@@ -570,7 +570,7 @@ function checkPw() {
   } else {
     const err = document.getElementById('pw-error');
     const inp = document.getElementById('pw-input');
-    err.textContent = 'salah password sayanggg 🥺';
+    err.textContent = 'salah password sayanggg';
     inp.classList.add('shake');
     setTimeout(() => inp.classList.remove('shake'), 500);
   }
@@ -800,9 +800,19 @@ function escHtml(s) {
 // ============ LITTLE GIFT ============
 const BOT_USERNAME = 'ddkenbot'; // ganti ini
 let selectedGift = null;
-const giftClaimed = localStorage.getItem('gift_claimed') === '1';
+let giftClaimed = false; // akan di-set dari Supabase
 
-function initGiftSection() {
+async function initGiftSection() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/gift_claims?select=id&limit=1`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
+    });
+    const data = await res.json();
+    giftClaimed = Array.isArray(data) && data.length > 0;
+  } catch(e) {
+    giftClaimed = false;
+  }
+
   if (giftClaimed) {
     document.getElementById('gift-section').innerHTML = `
       <div class="gift-section" style="margin-top:20px;border-top:1.5px dashed rgba(143,201,255,0.4);padding-top:18px;">
@@ -825,11 +835,8 @@ function selectGift(type) {
 
 function sendGift() {
   if (!selectedGift || giftClaimed) return;
-  // deep link ke bot, bot akan handle gift
   const url = `https://t.me/${BOT_USERNAME}?start=gift_${selectedGift}`;
   window.open(url, '_blank');
-  // mark claimed di localStorage
-  localStorage.setItem('gift_claimed', '1');
   const btn = document.getElementById('btn-send-gift');
   btn.disabled = true;
   btn.textContent = 'udah dibuka di Telegram ya';
@@ -839,7 +846,7 @@ function sendGift() {
 // ============ INIT ============
 window.addEventListener('load', () => {
   initBoard();
-  initGiftSection();
+  initGiftSection(); // async, query Supabase
   setTimeout(() => {
     document.getElementById('loading').classList.add('hide');
     document.getElementById('app').classList.add('show');
@@ -849,3 +856,4 @@ window.addEventListener('load', () => {
 </script>
 </body>
 </html>
+
